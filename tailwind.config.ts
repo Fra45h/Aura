@@ -90,10 +90,10 @@ export default {
         },
         'pulse-glow': {
           '0%, 100%': { 
-            boxShadow: '0 0 0 0 hsl(var(--primary) / 0.7)',
+            boxShadow: '0 0 0 0px hsl(var(--destructive) / 1)',
           },
           '70%': { 
-            boxShadow: '0 0 0 20px hsl(var(--primary) / 0)',
+            boxShadow: '0 0 0 20px hsl(var(--destructive) / 0)',
           },
         },
       },

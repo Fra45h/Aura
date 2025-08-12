@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'VoiceFlow',
+  title: 'Aura Assistant',
   description: 'A fully functioning voice assistant',
 };
 
