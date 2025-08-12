@@ -49,7 +49,7 @@ export function VoiceAssistant() {
 
         const stream = runFlow(interpretVoiceCommand, { voiceInput: base64Audio });
 
-        for await (const { textTranscription, intentChunk, isFinal, isUnderstood } of stream) {
+        for await (const { textTranscription, intentChunk, isFinal } of stream) {
           if (!userMessageUpdated) {
             setMessages(prev =>
               prev.map(msg =>
@@ -68,10 +68,8 @@ export function VoiceAssistant() {
           );
           
           if (isFinal) {
-            if (isUnderstood) {
-                const { audioDataUri } = await generateVoiceResponse({ text: intentChunk });
-                handleAudioPlayback(audioDataUri);
-            }
+            const { audioDataUri } = await generateVoiceResponse({ text: intentChunk });
+            handleAudioPlayback(audioDataUri);
             setIsProcessing(false);
           }
         }

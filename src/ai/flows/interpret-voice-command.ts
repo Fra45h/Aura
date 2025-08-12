@@ -26,7 +26,6 @@ const InterpretVoiceCommandOutputStreamSchema = z.object({
   textTranscription: z.string().describe('The text transcription of the voice input.'),
   intentChunk: z.string().describe('A chunk of the interpreted intent of the user command.'),
   isFinal: z.boolean().describe('Whether this is the final chunk of the intent.'),
-  isUnderstood: z.boolean().describe('Whether the assistant understood the command or not.'),
 });
 export type InterpretVoiceCommandOutputStream = z.infer<typeof InterpretVoiceCommandOutputStreamSchema>;
 
@@ -39,20 +38,6 @@ export async function interpretVoiceCommand(
   await interpretVoiceCommandFlow(input, stream);
 }
 
-const interpretIntentPrompt = ai.definePrompt({
-  name: 'interpretIntentPrompt',
-  input: {schema: z.object({textTranscription: z.string()})},
-  output: {schema: z.object({intent: z.string(), isUnderstood: z.boolean()})},
-  prompt: `You are J.A.R.V.I.S., the AI assistant from the Iron Man movies. Your personality is sophisticated, witty, and exceptionally helpful. You address the user as "sir."
-
-Your task is to interpret the user's command and respond in character.
-
-- If the command is a smart home request (e.g., "turn on the lights," "set thermostat to 72"), a request for information (e.g., "what's the weather"), or a simple task (e.g., "set a timer for 5 minutes"), formulate a concise, in-character response confirming the action or providing the information. For example: "Of course, sir. The lights are now on." or "The current weather is 75 degrees and sunny, sir." Set 'isUnderstood' to true.
-- If the command is unclear, ambiguous, or outside your capabilities, respond politely in character, explaining the limitation or asking for clarification. For example: "My apologies, sir, but I am unable to fetch the sports scores at the moment." or "Could you please clarify that request, sir?" Set 'isUnderstood' to false.
-
-User Command: {{{textTranscription}}}`,
-});
-
 const interpretVoiceCommandFlow = ai.defineFlow(
   {
     name: 'interpretVoiceCommandFlow',
@@ -63,41 +48,40 @@ const interpretVoiceCommandFlow = ai.defineFlow(
   async (input, stream) => {
     const { text: textTranscription } = await speechToText({ audioDataUri: input.voiceInput });
     
-    const { stream: intentStream, response: intentResponse } = await ai.generateStream({
-      prompt: `You are J.A.R.V.I.S., the AI assistant from the Iron Man movies. Your personality is sophisticated, witty, and exceptionally helpful. You address the user as "sir."
+    const systemPrompt = `You are J.A.R.V.I.S., the AI assistant from the Iron Man movies. Your personality is sophisticated, witty, and exceptionally helpful. You address the user as "sir."
 
 Your task is to interpret the user's command and respond in character.
 
 - If the command is a smart home request (e.g., "turn on the lights," "set thermostat to 72"), a request for information (e.g., "what's the weather"), or a simple task (e.g., "set a timer for 5 minutes"), formulate a concise, in-character response confirming the action or providing the information. For example: "Of course, sir. The lights are now on." or "The current weather is 75 degrees and sunny, sir."
 - If the command is unclear, ambiguous, or outside your capabilities, respond politely in character, explaining the limitation or asking for clarification. For example: "My apologies, sir, but I am unable to fetch the sports scores at the moment." or "Could you please clarify that request, sir?"
+- You must only output the direct response to the user. Do not add any extra fields or JSON formatting.`;
 
-User Command: ${textTranscription}`,
-      output: {
-        schema: z.object({
-          intent: z.string(),
-          isUnderstood: z.boolean(),
-        }),
-      },
+
+    const { stream: intentStream, response: intentResponse } = await ai.generateStream({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: textTranscription,
+        config: {
+            systemPrompt: systemPrompt,
+        }
     });
-
+    
+    let fullIntent = '';
     for await (const chunk of intentStream) {
-      const output = chunk.output!;
-      stream({
-        textTranscription,
-        intentChunk: output.intent,
-        isFinal: false,
-        isUnderstood: output.isUnderstood,
-      });
+        fullIntent += chunk.text;
+        stream({
+            textTranscription,
+            intentChunk: fullIntent,
+            isFinal: false,
+        });
     }
 
     const finalResponse = await intentResponse;
-    const finalOutput = finalResponse.output!
+    const finalOutput = finalResponse.text;
 
     stream({
       textTranscription,
-      intentChunk: finalOutput.intent,
+      intentChunk: finalOutput!,
       isFinal: true,
-      isUnderstood: finalOutput.isUnderstood,
     });
   }
 );
