@@ -1,5 +1,7 @@
 import type {Config} from 'tailwindcss';
 
+const plugin = require('tailwindcss/plugin');
+
 export default {
   darkMode: ['class'],
   content: [
@@ -12,7 +14,7 @@ export default {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['"Space Grotesk"', 'sans-serif'],
-        code: ['monospace'],
+        mono: ['"SF Mono"', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -88,21 +90,31 @@ export default {
             height: '0',
           },
         },
-        'pulse-glow': {
-          '0%, 100%': { 
-            boxShadow: '0 0 0 0px hsl(var(--destructive) / 1)',
-          },
-          '70%': { 
-            boxShadow: '0 0 0 20px hsl(var(--destructive) / 0)',
+        'ping-slow': {
+          '75%, 100%': {
+            transform: 'scale(1.8)',
+            opacity: '0',
           },
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'pulse-glow': 'pulse-glow 2s infinite',
+        'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    plugin(function ({matchUtilities, theme}) {
+      matchUtilities(
+        {
+          'bg-grid': (value) => ({
+            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='${value}'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e")`,
+          }),
+        },
+        {values: theme('backgroundColor')}
+      );
+    }),
+  ],
 } satisfies Config;
