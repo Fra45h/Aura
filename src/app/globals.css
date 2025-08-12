@@ -10,19 +10,19 @@
     --card-foreground: 210 20% 98%;
     --popover: 224 71% 4%;
     --popover-foreground: 210 20% 98%;
-    --primary: 217 91% 60%;
+    --primary: 260 95% 70%;
     --primary-foreground: 210 20% 98%;
     --secondary: 220 20% 15%;
     --secondary-foreground: 210 20% 98%;
     --muted: 220 20% 15%;
     --muted-foreground: 220 15% 65%;
-    --accent: 190 95% 60%;
+    --accent: 330 95% 60%;
     --accent-foreground: 224 71% 4%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 20% 98%;
     --border: 217 33% 25%;
     --input: 217 33% 25%;
-    --ring: 217 91% 60%;
+    --ring: 260 95% 70%;
     --chart-1: 217 91% 60%;
     --chart-2: 190 95% 60%;
     --chart-3: 197 37% 24%;
@@ -45,19 +45,19 @@
     --card-foreground: 210 20% 98%;
     --popover: 224 71% 4%;
     --popover-foreground: 210 20% 98%;
-    --primary: 217 91% 60%;
+    --primary: 260 95% 70%;
     --primary-foreground: 210 20% 98%;
     --secondary: 220 20% 15%;
     --secondary-foreground: 210 20% 98%;
     --muted: 220 20% 15%;
     --muted-foreground: 220 15% 65%;
-    --accent: 190 95% 60%;
+    --accent: 330 95% 60%;
     --accent-foreground: 224 71% 4%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 20% 98%;
     --border: 217 33% 25%;
     --input: 217 33% 25%;
-    --ring: 217 91% 60%;
+    --ring: 260 95% 70%;
     --chart-1: 217 91% 60%;
     --chart-2: 190 95% 60%;
     --chart-3: 197 37% 24%;
@@ -80,5 +80,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glow {
+    box-shadow: 0 0 5px theme('colors.primary.DEFAULT'),
+                0 0 10px theme('colors.primary.DEFAULT'),
+                0 0 20px theme('colors.accent.DEFAULT'),
+                0 0 30px theme('colors.accent.DEFAULT');
   }
 }

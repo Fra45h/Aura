@@ -96,11 +96,20 @@ export default {
             opacity: '0',
           },
         },
+        'spin-slow': {
+          'from': {
+            transform: 'rotate(0deg)',
+          },
+          'to': {
+            transform: 'rotate(360deg)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'spin-slow': 'spin-slow 3s linear infinite',
       },
     },
   },

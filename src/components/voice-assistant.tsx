@@ -91,7 +91,7 @@ export function VoiceAssistant() {
       <header className="flex items-center justify-between p-4 border-b border-primary/20 shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-full border border-primary/20">
-            <BrainCircuit className="h-6 w-6 text-primary animate-pulse" />
+            <BrainCircuit className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-2xl font-headline font-bold text-primary tracking-widest">J.A.R.V.I.S.</h1>
         </div>
@@ -100,18 +100,14 @@ export function VoiceAssistant() {
       <ScrollArea className="flex-1 p-6">
         <div className="space-y-8">
           {messages.length === 0 && (
-            <div className="text-center text-muted-foreground pt-24 flex flex-col items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center relative overflow-hidden">
-                 <div className="absolute inset-0 bg-primary/20 animate-pulse"></div>
-                 <BrainCircuit className="h-12 w-12 text-primary z-10" />
-              </div>
+            <div className="text-center text-muted-foreground pt-12 flex flex-col items-center gap-6">
               <p className="mt-2 text-xl font-headline">At your service, sir.</p>
             </div>
           )}
           {messages.map((message, index) => (
             <div key={index} className={cn("flex items-start gap-4", message.speaker === 'user' ? 'justify-end' : 'justify-start')}>
               {message.speaker === 'assistant' && (
-                <div className="p-2.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                <div className="p-2.5 rounded-full bg-primary/20 text-primary border border-primary/30 shrink-0">
                   <Bot className="h-5 w-5" />
                 </div>
               )}
@@ -124,7 +120,7 @@ export function VoiceAssistant() {
                 <p className="leading-relaxed font-mono">{message.text}</p>
               </div>
               {message.speaker === 'user' && (
-                <div className="p-2.5 rounded-full bg-secondary text-secondary-foreground border border-border">
+                <div className="p-2.5 rounded-full bg-secondary text-secondary-foreground border border-border shrink-0">
                   <User className="h-5 w-5" />
                 </div>
               )}
@@ -144,39 +140,42 @@ export function VoiceAssistant() {
         </div>
       </ScrollArea>
 
-      <footer className="p-6 flex flex-col items-center justify-center border-t border-primary/20 shrink-0 bg-background/50">
+      <footer className="p-6 flex flex-col items-center justify-center border-t border-primary/20 shrink-0 bg-transparent min-h-[220px]">
         <button
           onClick={toggleRecording}
           disabled={isProcessing && status !== 'recording'}
-          className={cn(
-            "relative rounded-full w-24 h-24 transition-all duration-300 ease-in-out border-2",
-            "bg-primary/10 border-primary/50 text-primary",
-            "hover:bg-primary/20 hover:border-primary",
-            status === 'recording' && "bg-destructive/20 border-destructive text-destructive animate-pulse",
-            "disabled:bg-muted disabled:border-border disabled:text-muted-foreground"
-          )}
+          className="relative w-32 h-32 flex items-center justify-center"
           aria-label={status === 'recording' ? 'Stop recording' : 'Start recording'}
         >
           <div className={cn(
-            "absolute inset-0 rounded-full bg-primary/20",
-            status === 'recording' ? 'animate-ping-slow opacity-50' : 'opacity-0'
+            "absolute inset-0 rounded-full transition-all duration-300",
+            status === 'recording' ? 'bg-accent/50 animate-pulse' : 'bg-primary/30',
+            isProcessing && status !== 'recording' ? "animate-spin" : ""
           )}></div>
-           <div className="relative z-10 flex items-center justify-center w-full h-full">
+          <div className={cn(
+            "absolute inset-2 rounded-full bg-background transition-all duration-300",
+             isProcessing && status !== 'recording' ? "bg-background/90" : ""
+          )}></div>
+          <div className={cn(
+            "absolute inset-4 rounded-full border-2 border-primary/50 glow transition-all duration-300",
+            status === 'recording' ? 'border-accent' : '',
+            isProcessing && status !== 'recording' ? "border-dashed border-primary/80 animate-spin-slow" : ""
+          )}></div>
+           <div className="relative z-10 text-primary">
             {isProcessing && status !== 'recording' ? (
-              <LoaderCircle className="h-10 w-10 animate-spin" />
+              <LoaderCircle className="h-12 w-12" />
             ) : status === 'recording' ? (
-              <div className="w-8 h-8 bg-destructive rounded-md" />
+              <Mic className="h-12 w-12 text-accent" />
             ) : (
-              <Mic className="h-10 w-10" />
+              <Mic className="h-12 w-12" />
             )}
            </div>
         </button>
-        <p className="text-sm text-muted-foreground mt-4 font-mono">
-          {status === 'recording' ? 'Recording...' : isProcessing ? 'Processing...' : 'Ready for command, sir.'}
+        <p className="text-sm text-muted-foreground mt-6 font-mono h-5">
+          {status === 'recording' ? 'Recording...' : isProcessing ? 'Processing...' : messages.length > 0 ? '' : 'Ready for command, sir.'}
         </p>
       </footer>
       <audio ref={audioRef} className="hidden" />
     </div>
   );
 }
-
