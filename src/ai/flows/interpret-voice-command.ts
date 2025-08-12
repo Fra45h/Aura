@@ -22,15 +22,21 @@ const InterpretVoiceCommandInputSchema = z.object({
 });
 export type InterpretVoiceCommandInput = z.infer<typeof InterpretVoiceCommandInputSchema>;
 
-const InterpretVoiceCommandOutputSchema = z.object({
+const InterpretVoiceCommandOutputStreamSchema = z.object({
   textTranscription: z.string().describe('The text transcription of the voice input.'),
-  intent: z.string().describe('The interpreted intent of the user command, phrased as a direct response from an AI assistant.'),
+  intentChunk: z.string().describe('A chunk of the interpreted intent of the user command.'),
+  isFinal: z.boolean().describe('Whether this is the final chunk of the intent.'),
   isUnderstood: z.boolean().describe('Whether the assistant understood the command or not.'),
 });
-export type InterpretVoiceCommandOutput = z.infer<typeof InterpretVoiceCommandOutputSchema>;
+export type InterpretVoiceCommandOutputStream = z.infer<typeof InterpretVoiceCommandOutputStreamSchema>;
 
-export async function interpretVoiceCommand(input: InterpretVoiceCommandInput): Promise<InterpretVoiceCommandOutput> {
-  return interpretVoiceCommandFlow(input);
+
+export async function interpretVoiceCommand(
+  input: InterpretVoiceCommandInput,
+  // Genkit's streaming helper.
+  stream: (chunk: InterpretVoiceCommandOutputStream) => void
+): Promise<void> {
+  await interpretVoiceCommandFlow(input, stream);
 }
 
 const interpretIntentPrompt = ai.definePrompt({
@@ -51,17 +57,47 @@ const interpretVoiceCommandFlow = ai.defineFlow(
   {
     name: 'interpretVoiceCommandFlow',
     inputSchema: InterpretVoiceCommandInputSchema,
-    outputSchema: InterpretVoiceCommandOutputSchema,
+    outputSchema: z.void(),
+    streamSchema: InterpretVoiceCommandOutputStreamSchema,
   },
-  async input => {
+  async (input, stream) => {
     const { text: textTranscription } = await speechToText({ audioDataUri: input.voiceInput });
     
-    const intentResult = await interpretIntentPrompt({ textTranscription });
+    const { stream: intentStream, response: intentResponse } = await ai.generateStream({
+      prompt: `You are J.A.R.V.I.S., the AI assistant from the Iron Man movies. Your personality is sophisticated, witty, and exceptionally helpful. You address the user as "sir."
 
-    return {
-      textTranscription: textTranscription,
-      intent: intentResult.output!.intent,
-      isUnderstood: intentResult.output!.isUnderstood,
-    };
+Your task is to interpret the user's command and respond in character.
+
+- If the command is a smart home request (e.g., "turn on the lights," "set thermostat to 72"), a request for information (e.g., "what's the weather"), or a simple task (e.g., "set a timer for 5 minutes"), formulate a concise, in-character response confirming the action or providing the information. For example: "Of course, sir. The lights are now on." or "The current weather is 75 degrees and sunny, sir."
+- If the command is unclear, ambiguous, or outside your capabilities, respond politely in character, explaining the limitation or asking for clarification. For example: "My apologies, sir, but I am unable to fetch the sports scores at the moment." or "Could you please clarify that request, sir?"
+
+User Command: ${textTranscription}`,
+      output: {
+        schema: z.object({
+          intent: z.string(),
+          isUnderstood: z.boolean(),
+        }),
+      },
+    });
+
+    for await (const chunk of intentStream) {
+      const output = chunk.output!;
+      stream({
+        textTranscription,
+        intentChunk: output.intent,
+        isFinal: false,
+        isUnderstood: output.isUnderstood,
+      });
+    }
+
+    const finalResponse = await intentResponse;
+    const finalOutput = finalResponse.output!
+
+    stream({
+      textTranscription,
+      intentChunk: finalOutput.intent,
+      isFinal: true,
+      isUnderstood: finalOutput.isUnderstood,
+    });
   }
 );
