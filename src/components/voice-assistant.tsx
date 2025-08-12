@@ -47,9 +47,7 @@ export function VoiceAssistant() {
 
         let userMessageUpdated = false;
 
-        const stream = runFlow(interpretVoiceCommand, { voiceInput: base64Audio });
-
-        for await (const { textTranscription, intentChunk, isFinal } of stream) {
+        await runFlow(interpretVoiceCommand, { voiceInput: base64Audio }, async ({ textTranscription, intentChunk, isFinal }) => {
           if (!userMessageUpdated) {
             setMessages(prev =>
               prev.map(msg =>
@@ -72,7 +70,7 @@ export function VoiceAssistant() {
             handleAudioPlayback(audioDataUri);
             setIsProcessing(false);
           }
-        }
+        });
       };
     } catch (error) {
       console.error('Error processing voice command:', error);
